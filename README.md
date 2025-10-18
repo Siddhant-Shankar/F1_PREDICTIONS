@@ -1,0 +1,1 @@
+A Formula 1 analytics project using the FastF1 API to extract, clean, and analyze race telemetry and lap time data. Includes predictive modeling using Gradient Boosting Regressors to estimate driver performance differences relative to pole position, along with visualizations comparing best laps, speed trends, and team performance across sessions.
