@@ -3,7 +3,7 @@ import "@fontsource-variable/mona-sans/wdth.css";
 import "@fontsource/monaspace-neon/400.css";
 import "@fontsource/monaspace-neon/600.css";
 import "./style.css";
-import { TrackScene, type CameraPreset } from "./scene";
+import { LABEL_FONT, TrackScene, type CameraPreset } from "./scene";
 import type { RaceForecast, Replay, SeasonForecasts } from "./types";
 
 const DATA = `${import.meta.env.BASE_URL}data`;
@@ -430,6 +430,8 @@ function roundFromHash(): number | null {
 }
 
 async function boot() {
+  // Car labels are painted on a canvas, which does not wait for web fonts.
+  const labelFont = document.fonts.load(LABEL_FONT).catch(() => undefined);
   try {
     state.season = await getJSON<SeasonForecasts>("forecasts-2026.json");
   } catch (err) {
@@ -441,6 +443,7 @@ async function boot() {
   scene.resize();
   requestAnimationFrame(tick);
   const latest = [...races].reverse().find((r) => r.replay) ?? races[races.length - 1];
+  await labelFont;
   await selectRace(roundFromHash() ?? latest.round);
   window.addEventListener("hashchange", () => {
     const rd = roundFromHash();
