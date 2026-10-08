@@ -9,3 +9,4 @@ Each race was forecast using only data available before it, with the model versi
 | 5 | [Saudi Arabian GP](R05_saudi_arabian_grand_prix.md) | `v2_form_gbm` | PIA | PIA | 25.2% | 2/3 | 0.788 |
 | 6 | [Miami GP](R06_miami_grand_prix.md) | `v3_elo_gbm` | NOR | PIA | 18.3% | 2/3 | 0.947 |
 | 7 | [Emilia Romagna GP](R07_emilia_romagna_grand_prix.md) | `v4_lambdarank` | PIA | VER | 15.2% | 2/3 | 0.761 |
+| 8 | [Monaco GP](R08_monaco_grand_prix.md) | `v5_rank_finishers` | NOR | NOR | 45.8% | 3/3 | 0.633 |

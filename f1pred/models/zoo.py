@@ -111,8 +111,14 @@ class LambdaRanker(Model):
     name: str = "v4_lambdarank"
     description: str = "LightGBM LambdaRank (optimises in-race ordering, NDCG)"
     features: list[str] = field(default_factory=lambda: list(ALL_FEATURES))
+    finishers_only: bool = False
 
     def fit(self, train):
+        if self.finishers_only:
+            # DNFs are mostly mechanical failures and crashes, so the "finishing
+            # position" of a retired car says little about its pace. Learning the
+            # order of classified finishers only gives a cleaner pace signal.
+            train = train[train["classified"].astype(bool)]
         train = train.sort_values(["race_idx", "finish_pos"])
         # Graded relevance: P1 in a 20-car field -> 20, P20 -> 1. Linear gains
         # (instead of LightGBM's default 2^rel - 1) keep the midfield in play.
@@ -146,5 +152,10 @@ def get_zoo() -> dict[str, Model]:
             features=list(ALL_FEATURES),
         ),
         LambdaRanker(),
+        LambdaRanker(
+            name="v5_rank_finishers",
+            description="LambdaRank trained on classified finishers only (DNFs are noise)",
+            finishers_only=True,
+        ),
     ]
     return {m.name: m for m in models}
