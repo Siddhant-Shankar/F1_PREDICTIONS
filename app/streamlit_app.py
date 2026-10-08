@@ -40,7 +40,7 @@ def _layout(fig: go.Figure, height: int) -> go.Figure:
         margin=dict(l=0, r=0, t=10, b=0),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color=INK_2, size=12),
+        font=dict(family="Mona Sans, sans-serif", color=INK_2, size=12),
         legend=dict(orientation="h", y=-0.18, x=0),
     )
     fig.update_xaxes(gridcolor=GRID, zeroline=False)

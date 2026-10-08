@@ -22,7 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 explain = ["shap>=0.44"]
-app = ["streamlit>=1.30", "plotly>=5.18"]
+app = ["streamlit>=1.45", "plotly>=5.18"]
 dev = ["pytest>=7.4", "ruff>=0.4"]
 
 [project.scripts]

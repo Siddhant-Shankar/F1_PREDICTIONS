@@ -4,7 +4,36 @@ primaryColor = "#d1361f"
 backgroundColor = "#fcfcfb"
 secondaryBackgroundColor = "#f1f0ec"
 textColor = "#0b0b0b"
-font = "sans serif"
+# Same open-source families as the Pit Wall web app (SIL OFL 1.1, licences in
+# app/static/fonts), served by the app itself.
+font = "Mona Sans, sans-serif"
+headingFont = "Hubot Sans, sans-serif"
+codeFont = "Monaspace Neon, monospace"
+
+[[theme.fontFaces]]
+family = "Mona Sans"
+url = "app/static/fonts/mona-sans-latin-wght-normal.woff2"
+weight = "200 900"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Hubot Sans"
+url = "app/static/fonts/hubot-sans-latin-wght-normal.woff2"
+weight = "200 900"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Monaspace Neon"
+url = "app/static/fonts/monaspace-neon-latin-400-normal.woff2"
+weight = "400"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Monaspace Neon"
+url = "app/static/fonts/monaspace-neon-latin-600-normal.woff2"
+weight = "600"
+style = "normal"
 
 [server]
 headless = true
+enableStaticServing = true
