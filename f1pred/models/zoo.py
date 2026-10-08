@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
@@ -20,7 +21,23 @@ from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from f1pred.features.build import QUALI_FEATURES
+from f1pred.features.build import (
+    FORM_FEATURES,
+    QUALI_FEATURES,
+)
+
+GBM_PARAMS = dict(
+    n_estimators=300,
+    learning_rate=0.03,
+    num_leaves=15,
+    min_child_samples=20,
+    subsample=0.8,
+    subsample_freq=1,
+    colsample_bytree=0.8,
+    reg_lambda=1.0,
+    random_state=42,
+    verbose=-1,
+)
 
 
 class Model:
@@ -63,9 +80,27 @@ class LinearQuali(Model):
         return -self.pipe.predict(race[self.features])
 
 
+@dataclass
+class GBMRegressor(Model):
+    """Gradient-boosted trees predicting finishing position."""
+
+    name: str = "v2_form_gbm"
+    description: str = "LightGBM regressor + driver/team rolling form"
+    features: list[str] = field(default_factory=lambda: QUALI_FEATURES + FORM_FEATURES)
+
+    def fit(self, train):
+        self.model = lgb.LGBMRegressor(objective="l1", **GBM_PARAMS)
+        self.model.fit(train[self.features], train["finish_pos"])
+        return self
+
+    def score(self, race):
+        return -self.model.predict(race[self.features])
+
+
 def get_zoo() -> dict[str, Model]:
     models: list[Model] = [
         GridBaseline(),
         LinearQuali(),
+        GBMRegressor(),
     ]
     return {m.name: m for m in models}
