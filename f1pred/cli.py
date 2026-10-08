@@ -67,6 +67,16 @@ def cmd_predict(args) -> None:
     print(f"wrote {summary['path']}")
 
 
+def cmd_explain(args) -> None:
+    from f1pred.explain import plot_global_importance
+    from f1pred.models.zoo import get_zoo
+
+    feats = _features()
+    model = get_zoo()[args.model].fit(feats)
+    importance = plot_global_importance(model, feats)
+    print(importance.round(4).to_string())
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="f1pred", description=__doc__)
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -88,6 +98,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("round", type=int)
     p.add_argument("--model", help="model version (default: latest)")
     p.set_defaults(func=cmd_predict)
+
+    p = sub.add_parser("explain", help="SHAP feature importance for a tree model")
+    p.add_argument("--model", default="v5_rank_finishers")
+    p.set_defaults(func=cmd_explain)
 
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
