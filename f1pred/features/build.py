@@ -12,6 +12,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from f1pred.features.elo import pre_race_elo
+
 # Feature groups. The model zoo adds them one at a time so the backtest shows
 # what each group is worth.
 QUALI_FEATURES = ["grid", "quali_pos", "quali_gap_pct", "teammate_quali_delta"]
@@ -24,8 +26,10 @@ FORM_FEATURES = [
     "team_dnf_rate",
     "season_points_rank",
 ]
+RATING_FEATURES = ["drv_elo", "team_elo", "drv_elo_rel", "team_elo_rel"]
+CIRCUIT_FEATURES = ["drv_circuit_pos", "circuit_grid_corr"]
 
-ALL_FEATURES = QUALI_FEATURES + FORM_FEATURES
+ALL_FEATURES = QUALI_FEATURES + FORM_FEATURES + RATING_FEATURES + CIRCUIT_FEATURES
 
 FORM_HALFLIFE = 4  # races; roughly a month of racing carries half the weight
 
@@ -95,4 +99,35 @@ def build_features(results: pd.DataFrame) -> pd.DataFrame:
         ascending=False, method="min"
     )
 
+    # --- Elo ratings --------------------------------------------------------
+    df["drv_elo"] = pre_race_elo(df, "driver")
+    df["team_elo"] = pre_race_elo(df, "team")
+    # Ratings relative to the field: 1600 means more against 1450s than 1580s.
+    for col in ("drv_elo", "team_elo"):
+        df[f"{col}_rel"] = df[col] - df.groupby("race_idx")[col].transform("mean")
+
+    # --- circuit history ----------------------------------------------------
+    df["drv_circuit_pos"] = df.groupby(["driver", "location"])["finish_pos"].transform(
+        lambda s: s.shift(1).expanding().mean()
+    )
+    df["circuit_grid_corr"] = _circuit_grid_corr(df)
+
     return df.sort_values(["race_idx", "finish_pos"]).reset_index(drop=True)
+
+
+def _circuit_grid_corr(df: pd.DataFrame) -> np.ndarray:
+    """How much grid order has historically decided the race at this circuit.
+
+    Spearman correlation of grid vs. finish over all *earlier* visits to the
+    track: high at Monaco/Singapore (little overtaking), lower at Spa/Bahrain.
+    Missing on a first visit; LightGBM handles NaN natively.
+    """
+    rows = []
+    for (race_idx, location), r in df.groupby(["race_idx", "location"]):
+        rows.append((race_idx, location, r["grid"].corr(r["finish_pos"], method="spearman")))
+    per_race = pd.DataFrame(rows, columns=["race_idx", "location", "corr"]).sort_values("race_idx")
+    per_race["circuit_grid_corr"] = per_race.groupby("location")["corr"].transform(
+        lambda s: s.shift(1).expanding().mean()
+    )
+    merged = df[["race_idx", "location"]].merge(per_race, on=["race_idx", "location"], how="left")
+    return merged["circuit_grid_corr"].to_numpy()

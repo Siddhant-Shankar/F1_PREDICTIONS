@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from f1pred.features.build import (
+    ALL_FEATURES,
     FORM_FEATURES,
     QUALI_FEATURES,
 )
@@ -102,5 +103,10 @@ def get_zoo() -> dict[str, Model]:
         GridBaseline(),
         LinearQuali(),
         GBMRegressor(),
+        GBMRegressor(
+            name="v3_elo_gbm",
+            description="+ driver/team Elo ratings and circuit history",
+            features=list(ALL_FEATURES),
+        ),
     ]
     return {m.name: m for m in models}

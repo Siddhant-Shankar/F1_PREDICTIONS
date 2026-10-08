@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from f1pred.features.build import ALL_FEATURES, build_features
+from f1pred.features.elo import pre_race_elo
 
 
 def _key(df):
@@ -47,9 +48,29 @@ def test_first_race_has_no_history(results):
     feats = build_features(results)
     first = feats[feats["race_idx"] == 0]
     assert first["drv_form_pos"].isna().all()
+    assert (first["drv_elo"] == 1500).all()
 
 
 def test_teammate_delta_is_antisymmetric(results):
     feats = build_features(results)
     sums = feats.groupby(["race_idx", "team"])["teammate_quali_delta"].sum()
     assert np.allclose(sums, 0)
+
+
+def test_elo_is_zero_sum_within_race(results):
+    feats = build_features(results)
+    elo = pre_race_elo(feats, "driver")
+    # Within a season (no shrinkage) the total rating mass is conserved.
+    season = feats[feats["season"] == 2022]
+    totals = elo.loc[season.index].groupby(season["race_idx"]).sum()
+    assert np.allclose(totals, totals.iloc[0])
+
+
+def test_elo_rewards_the_strongest_driver(results):
+    feats = build_features(results)
+    last = feats[feats["race_idx"] == feats["race_idx"].max()]
+    avg_finish = feats.groupby("driver")["finish_pos"].mean()
+    best = avg_finish.idxmin()
+    worst = avg_finish.idxmax()
+    elo = last.set_index("driver")["drv_elo"]
+    assert elo[best] > 1500 > elo[worst]
