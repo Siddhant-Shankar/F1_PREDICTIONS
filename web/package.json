@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/hubot-sans": "5.3.0",
+    "@fontsource-variable/mona-sans": "5.3.0",
+    "@fontsource/monaspace-neon": "5.3.0",
     "three": "0.169.0"
   },
   "devDependencies": {

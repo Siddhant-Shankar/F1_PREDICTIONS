@@ -1,3 +1,7 @@
+import "@fontsource-variable/hubot-sans/wdth.css";
+import "@fontsource-variable/mona-sans/wdth.css";
+import "@fontsource/monaspace-neon/400.css";
+import "@fontsource/monaspace-neon/600.css";
 import "./style.css";
 import { TrackScene, type CameraPreset } from "./scene";
 import type { RaceForecast, Replay, SeasonForecasts } from "./types";

@@ -30,6 +30,8 @@ function glowTexture(): THREE.Texture {
   return new THREE.CanvasTexture(c);
 }
 
+export const LABEL_FONT = "700 26px 'Hubot Sans Variable', 'Arial Narrow', sans-serif";
+
 function labelTexture(text: string, color: string): THREE.Texture {
   const c = document.createElement("canvas");
   c.width = 128;
@@ -40,7 +42,7 @@ function labelTexture(text: string, color: string): THREE.Texture {
   x.fillStyle = color;
   x.fillRect(0, 6, 6, 36);
   x.fillStyle = "#e9ebee";
-  x.font = "600 26px 'Barlow Condensed', 'Arial Narrow', sans-serif";
+  x.font = LABEL_FONT;
   x.textBaseline = "middle";
   x.fillText(text, 16, 25);
   const t = new THREE.CanvasTexture(c);
