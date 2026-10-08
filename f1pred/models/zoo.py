@@ -88,8 +88,11 @@ class GBMRegressor(Model):
     name: str = "v2_form_gbm"
     description: str = "LightGBM regressor + driver/team rolling form"
     features: list[str] = field(default_factory=lambda: QUALI_FEATURES + FORM_FEATURES)
+    finishers_only: bool = False
 
     def fit(self, train):
+        if self.finishers_only:
+            train = train[train["classified"].astype(bool)]
         self.model = lgb.LGBMRegressor(objective="l1", **GBM_PARAMS)
         self.model.fit(train[self.features], train["finish_pos"])
         return self
@@ -141,6 +144,41 @@ class LambdaRanker(Model):
         return self.model.predict(race[self.features])
 
 
+@dataclass
+class Ensemble(Model):
+    """Average of per-race standardised scores from several models.
+
+    The ranker, the regressor and the grid make partly independent errors:
+    the ranker is sharp at the front, the regressor is steadier through the
+    midfield, and the grid anchors both to what actually happened on Saturday.
+    """
+
+    name: str = "v6_ensemble"
+    description: str = "Blend: 50% finishers-only ranker, 25% regressor, 25% grid"
+    parts: list[tuple[Model, float]] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.parts:
+            self.parts = [
+                (LambdaRanker(finishers_only=True), 0.5),
+                (GBMRegressor(features=list(ALL_FEATURES), finishers_only=True), 0.25),
+                (GridBaseline(), 0.25),
+            ]
+        self.features = sorted({f for m, _ in self.parts for f in m.features})
+
+    def fit(self, train):
+        for model, _ in self.parts:
+            model.fit(train)
+        return self
+
+    def score(self, race):
+        total = np.zeros(len(race))
+        for model, weight in self.parts:
+            s = model.score(race)
+            total += weight * (s - s.mean()) / (s.std() + 1e-9)
+        return total
+
+
 def get_zoo() -> dict[str, Model]:
     models: list[Model] = [
         GridBaseline(),
@@ -157,5 +195,6 @@ def get_zoo() -> dict[str, Model]:
             description="LambdaRank trained on classified finishers only (DNFs are noise)",
             finishers_only=True,
         ),
+        Ensemble(),
     ]
     return {m.name: m for m in models}
