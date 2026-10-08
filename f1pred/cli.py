@@ -6,7 +6,9 @@ import argparse
 import logging
 import sys
 
-from f1pred.config import DEFAULT_SEASONS
+import pandas as pd
+
+from f1pred.config import DEFAULT_SEASONS, RESULTS_PATH
 
 
 def _seasons(text: str) -> list[int]:
@@ -16,11 +18,53 @@ def _seasons(text: str) -> list[int]:
     return [int(s) for s in text.split(",")]
 
 
+def _features() -> pd.DataFrame:
+    from f1pred.features.build import build_features
+
+    if not RESULTS_PATH.exists():
+        raise SystemExit(f"{RESULTS_PATH} not found; run `python -m f1pred ingest` first")
+    return build_features(pd.read_parquet(RESULTS_PATH))
+
+
 def cmd_ingest(args) -> None:
     from f1pred.data.ingest import ingest
 
     df = ingest(args.seasons, refresh=args.refresh)
     print(df.groupby("season")["round"].nunique().rename("races").to_string())
+
+
+def _backtest_one(name: str, start: int):
+    from f1pred.evaluation.backtest import walk_forward
+    from f1pred.models.zoo import get_zoo
+
+    return walk_forward(_features(), get_zoo()[name], start_season=start)
+
+
+def cmd_backtest(args) -> None:
+    from concurrent.futures import ProcessPoolExecutor
+
+    from f1pred.evaluation.report import write_reports
+    from f1pred.models.zoo import get_zoo
+
+    names = args.models or list(get_zoo())
+    print(f"backtesting {', '.join(names)} ...")
+    # Each model's walk-forward is independent, so run them in parallel.
+    with ProcessPoolExecutor(max_workers=args.jobs) as pool:
+        results = list(pool.map(_backtest_one, names, [args.start] * len(names)))
+    metrics = pd.concat([m for m, _ in results])
+    preds = pd.concat([p for _, p in results])
+    print(write_reports(metrics, preds))
+
+
+def cmd_predict(args) -> None:
+    from f1pred.models.zoo import get_zoo
+    from f1pred.predict import write_race_report
+
+    feats = _features()
+    zoo = get_zoo()
+    model = zoo[args.model or list(zoo)[-1]]
+    summary = write_race_report(feats, model, args.season, args.round)
+    print(f"wrote {summary['path']}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -32,6 +76,18 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--seasons", type=_seasons, default=list(DEFAULT_SEASONS))
     p.add_argument("--refresh", action="store_true", help="re-download everything")
     p.set_defaults(func=cmd_ingest)
+
+    p = sub.add_parser("backtest", help="walk-forward backtest of the model zoo")
+    p.add_argument("--models", nargs="*")
+    p.add_argument("--start", type=int, default=2023, help="first season to evaluate")
+    p.add_argument("--jobs", type=int, default=None, help="parallel workers (default: all cores)")
+    p.set_defaults(func=cmd_backtest)
+
+    p = sub.add_parser("predict", help="forecast one race and write a race report")
+    p.add_argument("season", type=int)
+    p.add_argument("round", type=int)
+    p.add_argument("--model", help="model version (default: latest)")
+    p.set_defaults(func=cmd_predict)
 
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):

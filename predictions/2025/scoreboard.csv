@@ -1,0 +1,2 @@
+season,round,event,model,spearman,ndcg10,winner_hit,podium_hits,top10_hits,mae_pos,win_logloss,win_brier,podium_brier,podium_logloss,winner,favourite,p_winner,path
+2025,3,Japanese Grand Prix,v0_grid,0.9639097744360902,0.9997630231689153,1.0,1.0,1.0,0.9,1.5223432055831665,0.034459271,0.05507702099999999,0.19551849675326166,VER,VER,0.2182,predictions/2025/R03_japanese_grand_prix.md
