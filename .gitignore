@@ -13,3 +13,10 @@ __pycache__/
 
 # Environment variables
 .env
+
+# Data and model artifacts (regenerate with `f1pred ingest` / `f1pred backtest`)
+data/raw/
+artifacts/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
