@@ -11,8 +11,16 @@ reads as a changelog of what moved the needle.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 import numpy as np
 import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+from f1pred.features.build import QUALI_FEATURES
 
 
 class Model:
@@ -38,8 +46,26 @@ class GridBaseline(Model):
         return -race["grid"].to_numpy(dtype=float)
 
 
+@dataclass
+class LinearQuali(Model):
+    """Ridge regression on qualifying pace, which captures *how much* faster than the field."""
+
+    name: str = "v1_quali_linear"
+    description: str = "Ridge regression on grid + qualifying gap + teammate delta"
+    features: list[str] = field(default_factory=lambda: list(QUALI_FEATURES))
+
+    def fit(self, train):
+        self.pipe = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), Ridge(1.0))
+        self.pipe.fit(train[self.features], train["finish_pos"])
+        return self
+
+    def score(self, race):
+        return -self.pipe.predict(race[self.features])
+
+
 def get_zoo() -> dict[str, Model]:
     models: list[Model] = [
         GridBaseline(),
+        LinearQuali(),
     ]
     return {m.name: m for m in models}

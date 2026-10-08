@@ -1,2 +1,3 @@
 season,round,event,model,spearman,ndcg10,winner_hit,podium_hits,top10_hits,mae_pos,win_logloss,win_brier,podium_brier,podium_logloss,winner,favourite,p_winner,path
-2025,3,Japanese Grand Prix,v0_grid,0.9639097744360902,0.9997630231689153,1.0,1.0,1.0,0.9,1.5223432055831665,0.034459271,0.05507702099999999,0.19551849675326166,VER,VER,0.2182,predictions/2025/R03_japanese_grand_prix.md
+2025,3,Japanese Grand Prix,v0_grid,0.9639097744360902,0.9997630231689152,1.0,1.0,1.0,0.9,1.5223432055831665,0.034459271,0.0550770209999999,0.1955184967532616,VER,VER,0.2182,predictions/2025/R03_japanese_grand_prix.md
+2025,4,Bahrain Grand Prix,v1_quali_linear,0.7127819548872181,0.9354999251691833,1.0,0.6666666666666666,0.8,3.1,1.3939233882843818,0.032134078999999996,0.07132821,0.23236503284808943,PIA,PIA,0.2481,predictions/2025/R04_bahrain_grand_prix.md
