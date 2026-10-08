@@ -98,6 +98,43 @@ class GBMRegressor(Model):
         return -self.model.predict(race[self.features])
 
 
+@dataclass
+class LambdaRanker(Model):
+    """Learning-to-rank: optimise the *ordering* within each race directly.
+
+    A regressor is penalised for predicting P4 vs P6 for a driver who finished
+    P5, even if it ranked the whole field correctly. LambdaRank instead
+    optimises NDCG, a ranking metric that weights mistakes at the front of the
+    grid most, which is where podiums and wins are decided.
+    """
+
+    name: str = "v4_lambdarank"
+    description: str = "LightGBM LambdaRank (optimises in-race ordering, NDCG)"
+    features: list[str] = field(default_factory=lambda: list(ALL_FEATURES))
+
+    def fit(self, train):
+        train = train.sort_values(["race_idx", "finish_pos"])
+        # Graded relevance: P1 in a 20-car field -> 20, P20 -> 1. Linear gains
+        # (instead of LightGBM's default 2^rel - 1) keep the midfield in play.
+        rel = (train["field_size"] + 1 - train["finish_pos"]).clip(lower=0).astype(int)
+        max_rel = int(rel.max())
+        self.model = lgb.LGBMRanker(
+            objective="lambdarank",
+            label_gain=list(range(max_rel + 1)),
+            lambdarank_truncation_level=10,
+            **GBM_PARAMS,
+        )
+        self.model.fit(
+            train[self.features],
+            rel,
+            group=train.groupby("race_idx", sort=True).size().to_numpy(),
+        )
+        return self
+
+    def score(self, race):
+        return self.model.predict(race[self.features])
+
+
 def get_zoo() -> dict[str, Model]:
     models: list[Model] = [
         GridBaseline(),
@@ -108,5 +145,6 @@ def get_zoo() -> dict[str, Model]:
             description="+ driver/team Elo ratings and circuit history",
             features=list(ALL_FEATURES),
         ),
+        LambdaRanker(),
     ]
     return {m.name: m for m in models}
