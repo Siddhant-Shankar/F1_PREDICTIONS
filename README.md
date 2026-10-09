@@ -65,7 +65,9 @@ version that existed at the time, are in [`predictions/2025`](predictions/2025).
 **[Open Pit Wall](https://siddhant-shankar.github.io/F1_PREDICTIONS/)** (static site on GitHub Pages)
 
 - **Landing page:** the latest race's forecast against its result, a ledger of every 2026
-  call, the misses ranked by how surprised the model was, and a line drawing of the 2026 car.
+  call, the misses ranked by how surprised the model was, a line drawing of the 2026 car,
+  and a 3D one to take apart: switch the active aero between corner and straight-line mode,
+  watch the airflow change, explode it into parts and read what the rules changed.
   The replay app lives at [`/replay/`](https://siddhant-shankar.github.io/F1_PREDICTIONS/replay/).
 - **Season rail:** every completed 2026 race with its circuit outline, the model's favourite
   (◆) against the winner (●), and whether the call was right.
