@@ -95,6 +95,15 @@ streamlit run app/streamlit_app.py   # interactive backtest explorer
 pytest                               # offline test suite (synthetic data)
 ```
 
+### Dashboard
+
+`streamlit run app/streamlit_app.py` opens an interactive explorer with three
+tabs: any backtested race (probabilities against the result), the model-version
+leaderboard, and accuracy race by race. It reads the committed backtest output,
+so it needs only `app/requirements.txt` and deploys as-is on
+[Streamlit Community Cloud](https://share.streamlit.io) with
+`app/streamlit_app.py` as the entrypoint.
+
 ## Project layout
 
 ```
@@ -109,7 +118,7 @@ f1pred/
   evaluation/report.py    leaderboard and figures
   predict.py              single-race forecast and race report
   explain.py              SHAP explanations
-app/streamlit_app.py      dashboard
+app/streamlit_app.py      dashboard (Streamlit Community Cloud ready)
 tests/                    leakage, simulation, metric, and backtest tests
 legacy/                   the original single-race scripts this project grew from
 ```

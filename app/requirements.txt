@@ -1,0 +1,6 @@
+# Dependencies for the hosted dashboard only (Streamlit Community Cloud reads
+# this file because it sits next to the entrypoint). The full pipeline uses
+# the root requirements.txt / pyproject.toml.
+streamlit>=1.40
+plotly>=5.18
+pandas>=2.0
