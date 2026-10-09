@@ -96,6 +96,55 @@
         </dl>
       </section>
 
+      <section class="garage" id="garage" aria-labelledby="garage-title">
+        <div class="section-head">
+          <h2 id="garage-title">Take one apart.</h2>
+          <p class="summary">
+            A 2026 car built in code to the same headline numbers. Drag to turn it, flip the wings between
+            their two modes and watch the air change, then pull it to pieces.
+          </p>
+        </div>
+        <div class="bay">
+          <div class="bay-stage">
+            <canvas aria-label="3D model of a 2026 Formula 1 car. Drag to rotate, scroll or pinch to zoom."></canvas>
+            <div class="part-labels" id="partLabels"></div>
+            <div class="garage-tip" id="garageTip" hidden></div>
+            <p class="garage-fallback" hidden>This 3D view needs WebGL, which this browser has turned off.</p>
+            <p class="garage-hint">Drag to turn · scroll to zoom</p>
+          </div>
+          <div class="console">
+            <div class="ctl">
+              <div class="ctl-head"><span class="ctl-label" id="aeroLabel">Aero mode</span></div>
+              <div class="seg wide" role="group" aria-labelledby="aeroLabel">
+                <button id="aero-corner" aria-pressed="true">Corner</button>
+                <button id="aero-straight" aria-pressed="false">Straight-line</button>
+              </div>
+              <p class="ctl-note" id="aeroNote" aria-live="polite"></p>
+            </div>
+            <div class="ctl">
+              <div class="ctl-head">
+                <span class="ctl-label">Airflow</span>
+                <button class="toggle" id="flowToggle" aria-pressed="true">Shown</button>
+              </div>
+              <p class="ctl-note">Illustrative streamlines, not CFD.</p>
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><label class="ctl-label" for="explode">Exploded view</label></div>
+              <input type="range" id="explode" min="0" max="100" value="0" />
+            </div>
+            <div class="ctl">
+              <div class="ctl-head"><span class="ctl-label">Livery</span><span class="ctl-value" id="liveryName"></span></div>
+              <div class="swatches" id="liveries" role="group" aria-label="Team livery"></div>
+            </div>
+            <div class="ctl parts">
+              <div class="ctl-head"><span class="ctl-label" id="partName">Parts</span></div>
+              <p class="ctl-note" id="partNote" aria-live="polite"></p>
+              <ul class="part-list" id="partList" aria-label="Parts"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="misses" id="misses" aria-labelledby="misses-title">
         <div class="section-head">
           <h2 id="misses-title">The calls it missed.</h2>

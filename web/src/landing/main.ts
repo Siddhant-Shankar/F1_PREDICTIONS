@@ -184,5 +184,16 @@ async function boot() {
   renderSeason(data);
   renderMisses(data);
   document.documentElement.classList.add("ready");
+  // three.js only loads once the garage is close to the viewport, in the latest winner's livery
+  const garage = $("#garage");
+  const io = new IntersectionObserver(
+    ([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      void import("./garage").then((m) => m.mountGarage(garage, winnerOf(latest).team));
+    },
+    { rootMargin: "600px 0px" },
+  );
+  io.observe(garage);
 }
 void boot();
