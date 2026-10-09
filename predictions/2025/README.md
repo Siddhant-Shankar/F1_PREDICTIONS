@@ -12,3 +12,4 @@ Each race was forecast using only data available before it, with the model versi
 | 8 | [Monaco GP](R08_monaco_grand_prix.md) | `v5_rank_finishers` | NOR | NOR | 45.8% | 3/3 | 0.633 |
 | 9 | [Spanish GP](R09_spanish_grand_prix.md) | `v6_ensemble` | PIA | PIA | 32.1% | 2/3 | 0.604 |
 | 10 | [Canadian GP](R10_canadian_grand_prix.md) | `v6_ensemble` | RUS | RUS | 23.1% | 2/3 | 0.630 |
+| 11 | [Austrian GP](R11_austrian_grand_prix.md) | `v6_ensemble` | NOR | NOR | 40.6% | 3/3 | 0.574 |
