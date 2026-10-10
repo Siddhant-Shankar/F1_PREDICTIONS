@@ -7,6 +7,9 @@ Prix (2023 to 2026).
 
 ![CI](https://github.com/Siddhant-Shankar/F1_PREDICTIONS/actions/workflows/ci.yml/badge.svg)
 
+**Live: [Pit Wall 2026](https://siddhant-shankar.github.io/F1_PREDICTIONS/)**, every 2026 race's
+forecast against the result, with a 3D replay built from the timing feed.
+
 ```
 $ python -m f1pred predict 2025 9
 

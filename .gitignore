@@ -20,3 +20,7 @@ artifacts/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+
+# Web app
+web/node_modules/
+web/dist/

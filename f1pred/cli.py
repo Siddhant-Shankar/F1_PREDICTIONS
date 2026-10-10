@@ -77,6 +77,13 @@ def cmd_explain(args) -> None:
     print(importance.round(4).to_string())
 
 
+def cmd_export_web(args) -> None:
+    from f1pred.export import export_web
+
+    export_web(args.season, args.rounds)
+    print("wrote web/public/data")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="f1pred", description=__doc__)
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -102,6 +109,11 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("explain", help="SHAP feature importance for a tree model")
     p.add_argument("--model", default="v5_rank_finishers")
     p.set_defaults(func=cmd_explain)
+
+    p = sub.add_parser("export-web", help="export forecasts and 3D replays for the web app")
+    p.add_argument("--season", type=int, default=2026)
+    p.add_argument("--rounds", type=int, nargs="*", help="default: every backtested round")
+    p.set_defaults(func=cmd_export_web)
 
     args = parser.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
