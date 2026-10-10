@@ -87,7 +87,7 @@ function renderSummary() {
     <div class="lapbox">${
       r.replay
         ? `<span class="label">Replay</span><strong id="lapBig">GRID</strong><small class="dim">real car positions from the timing feed</small>`
-        : `<span class="label">Replay</span><small class="dim">No position data exported for this race yet.</small>`
+        : `<span class="label">Replay</span><small class="dim">No car positions in the timing feed for this race.</small>`
     }</div>`;
 }
 
@@ -235,7 +235,7 @@ async function selectRace(round: number) {
   if (!race.replay) {
     const withReplay = state.season!.races.filter((r) => r.replay).map((r) => r.round);
     overlay(
-      `<div class="label">3D replay</div><p>No position data has been exported for this race yet. The forecast is on the right.</p>` +
+      `<div class="label">3D replay</div><p>The timing feed has no car positions for this race, so there is no replay. The forecast is on the right.</p>` +
         (withReplay.length ? `<button class="btn" id="goReplay">Open R${pad(withReplay[withReplay.length - 1])} replay</button>` : ""),
     );
     document.getElementById("goReplay")?.addEventListener("click", () => void selectRace(withReplay[withReplay.length - 1]));

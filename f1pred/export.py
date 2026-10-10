@@ -42,6 +42,22 @@ def _resample(xyz: np.ndarray, n: int) -> np.ndarray:
     return np.stack([np.interp(u, d, xyz[:, i]) for i in range(xyz.shape[1])], axis=1)
 
 
+def _centreline(laps) -> np.ndarray:
+    """Position trace of the quickest lap that actually has position data.
+
+    The fastest lap's position feed is sometimes empty (Monaco 2026), so fall
+    back through the next-quickest laps until one has a usable trace.
+    """
+    for _, lap in laps.dropna(subset=["LapTime"]).sort_values("LapTime").head(40).iterlaps():
+        try:
+            pos = lap.get_pos_data()
+        except Exception:  # noqa: BLE001 - missing feed for this lap; try the next
+            continue
+        if {"X", "Y", "Z"} <= set(pos.columns) and len(pos) > 200:
+            return pos[["X", "Y", "Z"]].to_numpy(float)
+    raise ValueError("no lap with position data")
+
+
 def export_race(season: int, rnd: int, dt: float = 2.5) -> dict:
     """Circuit geometry and a sampled position replay for one race."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -53,7 +69,7 @@ def export_race(season: int, rnd: int, dt: float = 2.5) -> dict:
 
     # FastF1 positions are in decimetres; convert to metres. The fastest lap
     # gives a clean centreline with the real elevation (Z) profile.
-    lap_xyz = laps.pick_fastest().get_pos_data()[["X", "Y", "Z"]].to_numpy(float) / 10.0
+    lap_xyz = _centreline(laps) / 10.0
     track = _resample(lap_xyz, TRACK_POINTS)
     center = track.mean(axis=0)
     lap_length = float(np.linalg.norm(np.diff(track, axis=0), axis=1).sum())
