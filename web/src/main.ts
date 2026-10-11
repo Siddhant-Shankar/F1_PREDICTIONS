@@ -41,6 +41,21 @@ function loadReplay(round: number): Promise<Replay> {
 }
 
 // ------------------------------------------------------------------ header + rail
+/** Small SVG of the circuit layout, fitted into the card while keeping its shape. */
+function outlineSVG(outline: [number, number][] | null): string {
+  if (!outline) return `<svg class="outline" viewBox="0 0 120 44" aria-hidden="true"></svg>`;
+  const xs = outline.map((p) => p[0]);
+  const ys = outline.map((p) => p[1]);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const scale = Math.min(116 / (x1 - x0), 40 / (y1 - y0));
+  const ox = (120 - (x1 - x0) * scale) / 2;
+  const oy = (44 - (y1 - y0) * scale) / 2;
+  const d = outline
+    .map(([x, y], i) => `${i ? "L" : "M"}${(ox + (x - x0) * scale).toFixed(1)} ${(oy + (y1 - y) * scale).toFixed(1)}`)
+    .join("");
+  return `<svg class="outline" viewBox="0 0 120 44" aria-hidden="true"><path d="${d}Z"/></svg>`;
+}
+
 function renderHeader(races: RaceForecast[]) {
   const hits = races.filter((r) => r.winner_hit).length;
   const podium = races.reduce((a, r) => a + r.podium_hits, 0);
@@ -57,6 +72,7 @@ function renderHeader(races: RaceForecast[]) {
       const win = r.rows.find((x) => x.finish === 1)!;
       return `<button class="chip" data-round="${r.round}" aria-pressed="false">
         <span class="rd"><span>R${pad(r.round)}</span>${r.replay ? '<span class="has3d label">3D</span>' : ""}</span>
+        ${outlineSVG(r.outline)}
         <span class="nm" title="${r.event}">${shortName(r.event)}</span>
         <span class="pw"><span class="f">◆ ${fav.driver}</span><span>● ${win.driver}</span>
           <span class="hit ${r.winner_hit ? "y" : "n"}">${r.winner_hit ? "HIT" : "MISS"}</span></span>
@@ -224,7 +240,13 @@ async function selectRace(round: number) {
   state.replay = null;
   state.lastLap = -1;
   setPlaying(false);
-  document.querySelectorAll<HTMLElement>(".chip").forEach((c) => c.setAttribute("aria-pressed", String(Number(c.dataset.round) === round)));
+  document.querySelectorAll<HTMLElement>(".chip").forEach((c) => {
+    const on = Number(c.dataset.round) === round;
+    c.setAttribute("aria-pressed", String(on));
+    if (on) c.scrollIntoView({ block: "nearest", inline: "nearest" });
+  });
+  // shareable link to this race, e.g. .../F1_PREDICTIONS/#r03
+  if (location.hash !== `#r${pad(round)}`) history.replaceState(null, "", `#r${pad(round)}`);
   $<HTMLButtonElement>("#play").disabled = true;
   $<HTMLInputElement>("#scrub").disabled = true;
   renderSummary();
@@ -351,6 +373,12 @@ function tick(now: number) {
 }
 
 // ------------------------------------------------------------------ boot
+function roundFromHash(): number | null {
+  const m = /^#r(\d{1,2})$/.exec(location.hash);
+  const rd = m ? Number(m[1]) : null;
+  return rd && state.season?.races.some((r) => r.round === rd) ? rd : null;
+}
+
 async function boot() {
   try {
     state.season = await getJSON<SeasonForecasts>("forecasts-2026.json");
@@ -363,6 +391,10 @@ async function boot() {
   scene.resize();
   requestAnimationFrame(tick);
   const latest = [...races].reverse().find((r) => r.replay) ?? races[races.length - 1];
-  await selectRace(latest.round);
+  await selectRace(roundFromHash() ?? latest.round);
+  window.addEventListener("hashchange", () => {
+    const rd = roundFromHash();
+    if (rd && rd !== state.race?.round) void selectRace(rd);
+  });
 }
 void boot();
