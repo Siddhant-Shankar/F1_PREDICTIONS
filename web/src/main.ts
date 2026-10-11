@@ -333,13 +333,14 @@ $("#play").onclick = () => {
   setPlaying(!state.playing);
 };
 
-// hover card
+// hover card (mouse) or tap card (touch)
 const tip = $("#tip");
-scene.canvas.addEventListener("pointermove", (ev) => {
+let tipTimer = 0;
+function showTip(ev: PointerEvent | MouseEvent): boolean {
   const car = state.replay ? scene.pick(ev.clientX, ev.clientY) : null;
   if (!car) {
     tip.hidden = true;
-    return;
+    return false;
   }
   const rows = state.race!.rows;
   const fc = rows.find((x) => x.driver === car.code);
@@ -353,8 +354,53 @@ scene.canvas.addEventListener("pointermove", (ev) => {
     <div class="row"><span>Predicted / grid</span><span>P${fc ? rows.indexOf(fc) + 1 : "–"} / P${car.grid}</span></div>
     <div class="row"><span>Result</span><span>${result}</span></div>`;
   tip.hidden = false;
+  return true;
+}
+scene.canvas.addEventListener("pointermove", (ev) => {
+  if (ev.pointerType === "mouse") showTip(ev);
 });
-scene.canvas.addEventListener("pointerleave", () => (tip.hidden = true));
+scene.canvas.addEventListener("pointerleave", (ev) => {
+  if (ev.pointerType === "mouse") tip.hidden = true;
+});
+// touch has no hover: a tap on a car pins its card for a few seconds
+scene.canvas.addEventListener("pointerup", (ev) => {
+  if (ev.pointerType === "mouse") return;
+  window.clearTimeout(tipTimer);
+  if (showTip(ev)) tipTimer = window.setTimeout(() => (tip.hidden = true), 3500);
+});
+
+// keyboard: space play/pause, arrows step a lap, [ ] change race, 1-3 cameras
+function jumpLap(step: number) {
+  const rp = state.replay;
+  if (!rp) return;
+  const lap = currentLap();
+  const target = Math.min(Math.max(lap + step, 1), rp.lap_starts.length);
+  state.frame = rp.lap_starts[target - 1];
+  placeCars();
+  updateLapUI();
+}
+document.addEventListener("keydown", (ev) => {
+  const el = ev.target as HTMLElement;
+  if (ev.metaKey || ev.ctrlKey || ev.altKey || el.matches("input, textarea, select")) return;
+  const races = state.season?.races ?? [];
+  const idx = races.findIndex((r) => r.round === state.race?.round);
+  if (ev.key === " " && !el.matches("button")) {
+    ev.preventDefault();
+    $<HTMLButtonElement>("#play").click();
+  } else if (ev.key === "ArrowRight") {
+    ev.preventDefault();
+    jumpLap(1);
+  } else if (ev.key === "ArrowLeft") {
+    ev.preventDefault();
+    jumpLap(-1);
+  } else if (ev.key === "]" && idx < races.length - 1) {
+    void selectRace(races[idx + 1].round);
+  } else if (ev.key === "[" && idx > 0) {
+    void selectRace(races[idx - 1].round);
+  } else if (["1", "2", "3"].includes(ev.key)) {
+    $(`#cam-${["orbit", "top", "side"][Number(ev.key) - 1]}`).click();
+  }
+});
 
 // ------------------------------------------------------------------ loop
 let prev = performance.now();
