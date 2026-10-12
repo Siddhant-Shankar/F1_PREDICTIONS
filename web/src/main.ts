@@ -196,7 +196,7 @@ function renderLegend() {
   const top = state.race!.rows.slice(0, 3).map((x) => `${x.driver} ${pct(x.p_win)}`).join(" · ");
   $("#legend").innerHTML =
     state.colorMode === "team"
-      ? `<span><i style="background:#8b93a1"></i>racing line</span><span><i style="background:var(--forecast);opacity:.5"></i>elevation, ×${scene.exag}</span><span>cars in team colours</span>`
+      ? `<span><i style="background:var(--racing-line)"></i>racing line</span><span><i style="background:var(--forecast);opacity:.5"></i>elevation, ×${scene.exag}</span><span>cars in team colours</span>`
       : `<span><i class="ramp"></i>model's P(win), low → high</span><span>${top}</span>`;
 }
 
@@ -311,6 +311,34 @@ const setColor = (mode: "team" | "prob") => {
   scene.paint(mode, pWin());
   renderLegend();
 };
+type Theme = "dark" | "light";
+const themeQuery = matchMedia("(prefers-color-scheme: light)");
+const setTheme = (theme: Theme, save: boolean) => {
+  document.documentElement.dataset.theme = theme;
+  $("#theme-dark").setAttribute("aria-pressed", String(theme === "dark"));
+  $("#theme-light").setAttribute("aria-pressed", String(theme === "light"));
+  if (save) {
+    try {
+      localStorage.setItem("pitwall-theme", theme);
+    } catch {
+      // storage blocked: the choice lasts for this visit only
+    }
+  }
+};
+const savedTheme = () => {
+  try {
+    return localStorage.getItem("pitwall-theme");
+  } catch {
+    return null;
+  }
+};
+setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark", false);
+// Follow the system setting until the visitor picks a theme here.
+themeQuery.addEventListener("change", (e) => {
+  if (!savedTheme()) setTheme(e.matches ? "light" : "dark", false);
+});
+$("#theme-dark").onclick = () => setTheme("dark", true);
+$("#theme-light").onclick = () => setTheme("light", true);
 $("#col-team").onclick = () => setColor("team");
 $("#col-prob").onclick = () => setColor("prob");
 $<HTMLInputElement>("#exag").oninput = (e) => {
@@ -401,6 +429,8 @@ document.addEventListener("keydown", (ev) => {
     void selectRace(races[idx + 1].round);
   } else if (ev.key === "[" && idx > 0) {
     void selectRace(races[idx - 1].round);
+  } else if (ev.key === "t" || ev.key === "T") {
+    $(`#theme-${document.documentElement.dataset.theme === "light" ? "dark" : "light"}`).click();
   } else if (["1", "2", "3"].includes(ev.key)) {
     $(`#cam-${["orbit", "top", "side"][Number(ev.key) - 1]}`).click();
   }

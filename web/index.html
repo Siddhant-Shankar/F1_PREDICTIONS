@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Pit Wall 2026</title>
     <meta name="description" content="Every 2026 Formula 1 race, forecast before lights out by a learning-to-rank model, against what actually happened, with a 3D replay from the timing feed." />
+    <script>
+      // Pick the theme before first paint: the saved choice, else the system setting.
+      try {
+        const t = localStorage.getItem("pitwall-theme");
+        document.documentElement.dataset.theme = t === "light" || t === "dark" ? t : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23b47cff'/%3E%3C/svg%3E" />
   </head>
   <body>
@@ -18,7 +27,13 @@
             <a href="https://github.com/Siddhant-Shankar/F1_PREDICTIONS">Code and methodology</a>
           </p>
         </div>
-        <div class="season-stats" id="seasonStats"></div>
+        <div class="head-right">
+          <div class="season-stats" id="seasonStats"></div>
+          <div class="seg" role="group" aria-label="Theme">
+            <button id="theme-dark" aria-pressed="true">Dark</button>
+            <button id="theme-light" aria-pressed="false">Light</button>
+          </div>
+        </div>
       </header>
 
       <nav class="rail" id="rail" aria-label="2026 races"></nav>
@@ -75,7 +90,7 @@
       <footer class="note">
         Forecasts: <code>v6_ensemble</code> from the walk-forward backtest. Positions: FastF1 timing
         feed, sampled every 2.5 s. Unofficial fan project, not affiliated with Formula 1.
-        <span class="keys">Keys: <kbd>Space</kbd> play · <kbd>←</kbd> <kbd>→</kbd> lap · <kbd>[</kbd> <kbd>]</kbd> race · <kbd>1</kbd>–<kbd>3</kbd> camera</span>
+        <span class="keys">Keys: <kbd>Space</kbd> play · <kbd>←</kbd> <kbd>→</kbd> lap · <kbd>[</kbd> <kbd>]</kbd> race · <kbd>1</kbd>–<kbd>3</kbd> camera · <kbd>T</kbd> theme</span>
       </footer>
     </div>
     <script type="module" src="/src/main.ts"></script>
