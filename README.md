@@ -58,6 +58,29 @@ train on all earlier races, predict, then score against the real result.
 Race-by-race forecast reports for the 2025 season, each made with the model
 version that existed at the time, are in [`predictions/2025`](predictions/2025).
 
+## Pit Wall: the 2026 season in 3D
+
+[![Pit Wall: Belgian GP replay with the forecast against the result](docs/pitwall.png)](https://siddhant-shankar.github.io/F1_PREDICTIONS/)
+
+**[Open Pit Wall](https://siddhant-shankar.github.io/F1_PREDICTIONS/)** (static site on GitHub Pages)
+
+- **Season rail:** every completed 2026 race with its circuit outline, the model's favourite
+  (◆) against the winner (●), and whether the call was right.
+- **3D replay:** the circuit is rebuilt from the timing feed's X/Y/Z positions, with the
+  height exaggerated (adjustable) so Eau Rouge and Suzuka's crossover read clearly. All 22 cars
+  replay the race at 8× to 90×, and can be coloured by team or by the model's P(win).
+- **Timing tower:** forecast against result, or the running order lap by lap against each
+  driver's predicted position.
+
+Built with Vite + TypeScript + three.js. `python -m f1pred export-web` writes the data as
+static JSON (about 600 KB per race), and a GitHub Actions workflow builds and deploys `web/` on
+every push. Monaco has no replay because the timing feed has no car positions for that race.
+
+```bash
+python -m f1pred export-web --season 2026   # forecasts + replays -> web/public/data
+cd web && npm ci && npm run dev             # http://localhost:5173
+```
+
 ## How it works
 
 ```
@@ -121,7 +144,11 @@ f1pred/
   evaluation/report.py    leaderboard and figures
   predict.py              single-race forecast and race report
   explain.py              SHAP explanations
+  export.py               static JSON for the web app (forecasts, track geometry, replays)
 app/streamlit_app.py      dashboard (Streamlit Community Cloud ready)
+web/                      Pit Wall: Vite + TypeScript + three.js, deployed to GitHub Pages
+  src/scene.ts            3D circuit, cars, cameras, picking
+  src/main.ts             season rail, timing tower, replay clock, controls
 tests/                    leakage, simulation, metric, and backtest tests
 legacy/                   the original single-race scripts this project grew from
 ```
