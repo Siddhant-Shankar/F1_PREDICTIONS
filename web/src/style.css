@@ -1,62 +1,5 @@
 /* Layout: pit-wall timing screen. Season rail on top, then race summary | 3D circuit | timing tower, scrubber underneath. */
-:root {
-  color-scheme: dark;
-  --bg: #0d0f12;          /* graphite, faint blue bias */
-  --panel: #14171c;
-  --line: #262b33;
-  --fg: #e9ebee;
-  --fg-2: #9aa1ab;
-  --fg-3: #626a75;
-  --forecast: #b47cff;    /* "purple sector": the model's prediction, used nowhere else */
-  --forecast-dim: #b47cff33;
-  --good: #3ccf7e;
-  --miss: #ff6b5e;
-  --good-line: #3ccf7e55;
-  --miss-line: #ff6b5e55;
-  --chip-on: #1a1622;
-  --raised: #1d2128;
-  --seg-on: #262b33;
-  --scrim: #0d0f12cc;
-  --veil: #0d0f12d9;
-  --tip-bg: #0b0d10f2;
-  --row-line: #1d2128;
-  --row-hl: #b47cff12;
-  --ramp-lo: #2b2f38;
-  --racing-line: #8b93a1;
-  /* GitHub's open-source families (SIL OFL), bundled from npm: Hubot Sans for display at its wide and
-     condensed widths, Mona Sans for text, Monaspace Neon for every number. */
-  --display: "Hubot Sans Variable", "Arial Narrow", sans-serif;
-  --body: "Mona Sans Variable", "Segoe UI", system-ui, sans-serif;
-  --mono: "Monaspace Neon", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --narrow: 75%;
-  --wide: 125%;
-}
-/* Light theme: same layout and meaning, the purple sector darkened so it holds contrast on white. */
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f2f3f5;
-  --panel: #ffffff;
-  --line: #d8dbe0;
-  --fg: #14171c;
-  --fg-2: #4b525c;
-  --fg-3: #767e89;
-  --forecast: #7a35e8;
-  --forecast-dim: #7a35e82e;
-  --good: #11834a;
-  --miss: #d2382a;
-  --good-line: #11834a55;
-  --miss-line: #d2382a55;
-  --chip-on: #f3ecfe;
-  --raised: #f5f6f8;
-  --seg-on: #e4e7eb;
-  --scrim: #ffffffd9;
-  --veil: #f2f3f5e6;
-  --tip-bg: #fffffff5;
-  --row-line: #eceef1;
-  --row-hl: #7a35e80f;
-  --ramp-lo: #d6d9df;
-  --racing-line: #6b727d;
-}
+@import "./tokens.css";
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -83,6 +26,7 @@ button { font: inherit; color: inherit; }
 header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
 h1 { font-family: var(--display); font-stretch: var(--wide); font-weight: 800; font-size: 31px; line-height: 1; margin: 0; letter-spacing: -.01em; text-transform: uppercase; }
 h1 span { color: var(--fg-3); font-weight: 400; }
+h1 a { color: inherit; text-decoration: none; }
 .head-right { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 26px; }
 .season-stats { display: flex; gap: 22px; flex-wrap: wrap; }
 .stat { display: grid; gap: 2px; }

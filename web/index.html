@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Pit Wall 2026</title>
-    <meta name="description" content="Every 2026 Formula 1 race, forecast before lights out by a learning-to-rank model, against what actually happened, with a 3D replay from the timing feed." />
+    <meta name="description" content="Every 2026 Formula 1 race, forecast before lights out by a learning-to-rank model trained only on earlier races, held up against what actually happened." />
     <script>
+      // Old shareable links pointed at the replay app on the root (#r05); send them to its new home.
+      if (/^#r\d{1,2}$/.test(location.hash)) location.replace("replay/" + location.hash);
       // Pick the theme before first paint: the saved choice, else the system setting.
       try {
         const t = localStorage.getItem("pitwall-theme");
@@ -17,82 +19,136 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23b47cff'/%3E%3C/svg%3E" />
   </head>
   <body>
-    <div class="wrap">
-      <header>
-        <div class="intro">
-          <h1>Pit Wall <span>2026</span></h1>
-          <p class="note">
-            Every completed 2026 race, forecast before lights out by a learning-to-rank model
-            trained only on earlier races, next to what actually happened.
-            <a href="https://github.com/Siddhant-Shankar/F1_PREDICTIONS">Code and methodology</a>
+    <header class="top">
+      <a class="mark" href="./">Pit Wall <span>2026</span></a>
+      <nav aria-label="Sections">
+        <a href="#season">Season</a>
+        <a href="#misses" class="wide-only">Misses</a>
+        <a href="#method" class="wide-only">Method</a>
+        <a class="go" href="replay/">Replays</a>
+      </nav>
+      <div class="seg" role="group" aria-label="Theme">
+        <button id="theme-dark" aria-pressed="true">Dark</button>
+        <button id="theme-light" aria-pressed="false">Light</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">Called before lights&nbsp;out.</h1>
+          <p class="lede">
+            Pit Wall forecasts every 2026 Grand Prix with a learning-to-rank model that only sees races
+            already run, then holds each call up against the result. All of them, misses included.
           </p>
-        </div>
-        <div class="head-right">
-          <div class="season-stats" id="seasonStats"></div>
-          <div class="seg" role="group" aria-label="Theme">
-            <button id="theme-dark" aria-pressed="true">Dark</button>
-            <button id="theme-light" aria-pressed="false">Light</button>
+          <div class="actions">
+            <a class="btn primary" id="cta-replay" href="replay/">Open the replays</a>
+            <a class="btn" href="#season">See every call</a>
           </div>
         </div>
-      </header>
-
-      <nav class="rail" id="rail" aria-label="2026 races"></nav>
-
-      <main>
-        <section class="panel summary" id="summary" aria-live="polite"></section>
-
-        <section class="panel stage">
-          <canvas id="scene" aria-label="3D model of the circuit with cars"></canvas>
-          <div class="stage-top">
-            <div class="seg" role="group" aria-label="Camera">
-              <button id="cam-orbit" aria-pressed="true">Orbit</button>
-              <button id="cam-top" aria-pressed="false">Overhead</button>
-              <button id="cam-side" aria-pressed="false">Elevation</button>
-            </div>
-            <div class="seg" role="group" aria-label="Colour cars by">
-              <button id="col-team" aria-pressed="true">Team</button>
-              <button id="col-prob" aria-pressed="false">P(win)</button>
-            </div>
-            <label class="exag label" for="exag">Height ×<span class="num" id="exagv">4</span>
-              <input id="exag" type="range" min="1" max="10" step="1" value="4" />
-            </label>
-          </div>
-          <div class="stage-legend" id="legend"></div>
-          <div id="tip" hidden></div>
-          <div class="overlay" id="overlay" hidden></div>
-        </section>
-
-        <section class="panel tower">
-          <div class="tower-tabs" role="tablist">
-            <button role="tab" id="tab-fc" aria-selected="true">Forecast vs result</button>
-            <button role="tab" id="tab-live" aria-selected="false">Running order</button>
-          </div>
-          <div class="tbl-wrap"><table id="tower"></table></div>
-        </section>
-      </main>
-
-      <section class="panel scrub">
-        <button class="play" id="play" aria-label="Play replay">
-          <svg viewBox="0 0 14 14" id="playIcon"><path d="M2 1l11 6-11 6z" /></svg>
-        </button>
-        <div class="track-bar">
-          <div class="ticks" id="ticks"></div>
-          <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Race time" />
-        </div>
-        <div class="seg" role="group" aria-label="Replay speed">
-          <button data-speed="8" aria-pressed="false">8×</button>
-          <button data-speed="30" aria-pressed="true">30×</button>
-          <button data-speed="90" aria-pressed="false">90×</button>
-        </div>
-        <div class="lapread" id="lapread">LAP <b>0</b></div>
+        <figure class="latest" id="latest" aria-live="polite">
+          <svg class="hero-track" id="heroTrack" viewBox="0 0 400 300" aria-hidden="true"></svg>
+          <figcaption class="latest-card" id="latestCard">
+            <p class="loading">Loading the latest race…</p>
+          </figcaption>
+        </figure>
       </section>
 
-      <footer class="note">
-        Forecasts: <code>v6_ensemble</code> from the walk-forward backtest. Positions: FastF1 timing
-        feed, sampled every 2.5 s. Unofficial fan project, not affiliated with Formula 1.
-        <span class="keys">Keys: <kbd>Space</kbd> play · <kbd>←</kbd> <kbd>→</kbd> lap · <kbd>[</kbd> <kbd>]</kbd> race · <kbd>1</kbd>–<kbd>3</kbd> camera · <kbd>T</kbd> theme</span>
-      </footer>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
+      <section class="season" id="season" aria-labelledby="season-title">
+        <div class="section-head">
+          <h2 id="season-title">Every call of 2026.</h2>
+          <p class="summary" id="seasonSummary"></p>
+        </div>
+        <ol class="ledger" id="ledger"></ol>
+        <p class="legend">
+          <span><svg class="mk" viewBox="0 0 10 10" aria-hidden="true"><path class="fav" d="M5 0.5 9.5 5 5 9.5 0.5 5z" /></svg> model favourite and its chance to win</span>
+          <span><svg class="mk" viewBox="0 0 10 10" aria-hidden="true"><circle class="win" cx="5" cy="5" r="4" /></svg> race winner</span>
+        </p>
+      </section>
+
+      <section class="misses" id="misses" aria-labelledby="misses-title">
+        <div class="section-head">
+          <h2 id="misses-title">The calls it missed.</h2>
+          <p class="summary" id="missesSummary"></p>
+        </div>
+        <div class="tbl-wrap">
+          <table id="missTable">
+            <thead>
+              <tr>
+                <th scope="col">Race</th>
+                <th scope="col">Winner</th>
+                <th scope="col" class="r">Model gave the winner</th>
+                <th scope="col">Favourite instead</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="method" id="method" aria-labelledby="method-title">
+        <div class="section-head">
+          <h2 id="method-title">How a call gets made.</h2>
+          <p class="summary">
+            The same pipeline runs before every race, trained only on what happened earlier, so no
+            forecast on this site has seen its own result.
+          </p>
+        </div>
+        <ol class="steps">
+          <li>
+            <h3>Features</h3>
+            <p>Qualifying pace, recent form, Elo-style ratings and circuit history, each built from sessions before the race.</p>
+          </li>
+          <li>
+            <h3>Ranker</h3>
+            <p>A LightGBM LambdaRank model orders the grid. It trains on classified finishers only, so a gearbox failure doesn't read as slow pace.</p>
+          </li>
+          <li>
+            <h3>Ensemble</h3>
+            <p>The ranker is blended with a finishing-position regressor and the starting grid itself.</p>
+          </li>
+          <li>
+            <h3>Simulation</h3>
+            <p>Plackett–Luce sampling turns scores into chances to win, reach the podium and score points.</p>
+          </li>
+        </ol>
+        <div class="backtest">
+          <p>
+            Walk-forward backtest over <span class="num">86</span> Grands Prix, 2023 to 2026, against the
+            simplest forecast there is: the starting grid.
+          </p>
+          <table>
+            <thead>
+              <tr><th scope="col">Metric</th><th scope="col" class="r">Starting grid</th><th scope="col" class="r">Pit Wall</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Winner called</th><td class="r">60.5%</td><td class="r f">66.3%</td></tr>
+              <tr><th scope="row">Podium overlap</th><td class="r">67.4%</td><td class="r f">68.2%</td></tr>
+              <tr><th scope="row">Rank correlation</th><td class="r">0.654</td><td class="r f">0.693</td></tr>
+              <tr><th scope="row">Mean position error</th><td class="r">3.36</td><td class="r f">3.17</td></tr>
+            </tbody>
+          </table>
+          <a class="more" href="https://github.com/Siddhant-Shankar/F1_PREDICTIONS#results">Full leaderboard and methodology</a>
+        </div>
+      </section>
+
+      <section class="closer" aria-label="Replays">
+        <a class="closer-link" href="replay/">
+          <span>Watch any race back in 3D, with the forecast beside the running order.</span>
+          <b>Open the replays
+            <svg viewBox="0 0 20 12" aria-hidden="true"><path d="M0 6h18M13 1l5 5-5 5" /></svg>
+          </b>
+        </a>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Forecasts from the <code>v6_ensemble</code> model. Timing data from FastF1. Unofficial fan project,
+        not affiliated with Formula 1.
+      </p>
+      <a href="https://github.com/Siddhant-Shankar/F1_PREDICTIONS">Source on GitHub</a>
+    </footer>
+    <script type="module" src="/src/landing/main.ts"></script>
   </body>
 </html>

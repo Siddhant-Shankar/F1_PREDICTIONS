@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pit Wall 2026 · Replays</title>
+    <meta name="description" content="Every 2026 Formula 1 race, forecast before lights out by a learning-to-rank model, against what actually happened, with a 3D replay from the timing feed." />
+    <script>
+      // Pick the theme before first paint: the saved choice, else the system setting.
+      try {
+        const t = localStorage.getItem("pitwall-theme");
+        document.documentElement.dataset.theme = t === "light" || t === "dark" ? t : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23b47cff'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="intro">
+          <h1><a href="../" title="Pit Wall home">Pit Wall <span>2026</span></a></h1>
+          <p class="note">
+            Every completed 2026 race, forecast before lights out by a learning-to-rank model
+            trained only on earlier races, next to what actually happened.
+            <a href="https://github.com/Siddhant-Shankar/F1_PREDICTIONS">Code and methodology</a>
+          </p>
+        </div>
+        <div class="head-right">
+          <div class="season-stats" id="seasonStats"></div>
+          <div class="seg" role="group" aria-label="Theme">
+            <button id="theme-dark" aria-pressed="true">Dark</button>
+            <button id="theme-light" aria-pressed="false">Light</button>
+          </div>
+        </div>
+      </header>
+
+      <nav class="rail" id="rail" aria-label="2026 races"></nav>
+
+      <main>
+        <section class="panel summary" id="summary" aria-live="polite"></section>
+
+        <section class="panel stage">
+          <canvas id="scene" aria-label="3D model of the circuit with cars"></canvas>
+          <div class="stage-top">
+            <div class="seg" role="group" aria-label="Camera">
+              <button id="cam-orbit" aria-pressed="true">Orbit</button>
+              <button id="cam-top" aria-pressed="false">Overhead</button>
+              <button id="cam-side" aria-pressed="false">Elevation</button>
+            </div>
+            <div class="seg" role="group" aria-label="Colour cars by">
+              <button id="col-team" aria-pressed="true">Team</button>
+              <button id="col-prob" aria-pressed="false">P(win)</button>
+            </div>
+            <label class="exag label" for="exag">Height ×<span class="num" id="exagv">4</span>
+              <input id="exag" type="range" min="1" max="10" step="1" value="4" />
+            </label>
+          </div>
+          <div class="stage-legend" id="legend"></div>
+          <div id="tip" hidden></div>
+          <div class="overlay" id="overlay" hidden></div>
+        </section>
+
+        <section class="panel tower">
+          <div class="tower-tabs" role="tablist">
+            <button role="tab" id="tab-fc" aria-selected="true">Forecast vs result</button>
+            <button role="tab" id="tab-live" aria-selected="false">Running order</button>
+          </div>
+          <div class="tbl-wrap"><table id="tower"></table></div>
+        </section>
+      </main>
+
+      <section class="panel scrub">
+        <button class="play" id="play" aria-label="Play replay">
+          <svg viewBox="0 0 14 14" id="playIcon"><path d="M2 1l11 6-11 6z" /></svg>
+        </button>
+        <div class="track-bar">
+          <div class="ticks" id="ticks"></div>
+          <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Race time" />
+        </div>
+        <div class="seg" role="group" aria-label="Replay speed">
+          <button data-speed="8" aria-pressed="false">8×</button>
+          <button data-speed="30" aria-pressed="true">30×</button>
+          <button data-speed="90" aria-pressed="false">90×</button>
+        </div>
+        <div class="lapread" id="lapread">LAP <b>0</b></div>
+      </section>
+
+      <footer class="note">
+        Forecasts: <code>v6_ensemble</code> from the walk-forward backtest. Positions: FastF1 timing
+        feed, sampled every 2.5 s. Unofficial fan project, not affiliated with Formula 1.
+        <span class="keys">Keys: <kbd>Space</kbd> play · <kbd>←</kbd> <kbd>→</kbd> lap · <kbd>[</kbd> <kbd>]</kbd> race · <kbd>1</kbd>–<kbd>3</kbd> camera · <kbd>T</kbd> theme</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
