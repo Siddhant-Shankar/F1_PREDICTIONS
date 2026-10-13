@@ -170,6 +170,42 @@ h2 {
 .legend { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 16px 0 0; font-size: 13px; color: var(--fg-2); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 
+/* ---------- the car ---------- */
+.drawing {
+  border-block: 1px solid var(--line); padding-block: clamp(16px, 3vw, 32px);
+  background-image: linear-gradient(var(--row-line) 1px, transparent 1px), linear-gradient(90deg, var(--row-line) 1px, transparent 1px);
+  background-size: 24px 24px; background-position: -1px -1px;
+}
+.car { display: block; width: 100%; height: auto; overflow: visible; }
+.car path, .car circle { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.car .ground { stroke: var(--fg-3); stroke-width: 1; }
+.car .body { fill: var(--panel); stroke: var(--fg); stroke-width: 1.5; }
+.car .line { stroke: var(--fg-2); stroke-width: 1.1; }
+.car .line.thin { stroke-width: .8; stroke-dasharray: 2 3; }
+.car .hidden { stroke: var(--fg-2); stroke-width: 1; stroke-dasharray: 3 3; }
+.car .plate { fill: var(--panel); fill-opacity: .55; stroke: var(--fg); stroke-width: 1.4; }
+.car .halo { stroke: var(--fg); stroke-width: 3.4; }
+.car .helmet { fill: var(--panel); stroke: var(--fg); stroke-width: 1.3; }
+.car .visor { stroke: var(--fg); stroke-width: 2.4; }
+.car .tyre { fill: var(--raised); stroke: var(--fg); stroke-width: 1.5; }
+.car .band { stroke: var(--fg-3); stroke-width: .8; }
+.car .rim { fill: var(--panel); stroke: var(--fg-2); stroke-width: 1.1; }
+.car .hub { fill: var(--fg-2); }
+.car .dim path { stroke: var(--fg-2); stroke-width: .9; }
+.car .dim rect { fill: var(--bg); }
+.car text { font-family: var(--display); font-stretch: var(--narrow); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; fill: var(--fg); }
+.car .anno path { stroke: var(--fg-3); stroke-width: .9; }
+.car .anno circle { fill: var(--fg); }
+.car .anno text.sub { font-family: var(--body); font-stretch: 100%; font-weight: 400; font-size: 12px; letter-spacing: 0; text-transform: none; fill: var(--fg-2); }
+
+.specs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-bottom: 1px solid var(--line); }
+.specs div { padding: 18px 16px 20px 0; display: grid; gap: 2px; }
+.specs div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+.specs dt { font-family: var(--display); font-stretch: var(--narrow); font-weight: 600; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-2); }
+.specs dd { margin: 0; font-size: 15px; color: var(--fg-2); }
+.specs dd:first-of-type .num { font-size: clamp(24px, 2.6vw, 32px); color: var(--fg); font-weight: 600; }
+.specs .was { font-size: 13px; }
+
 /* ---------- misses ---------- */
 .tbl-wrap { overflow-x: auto; }
 .misses table { max-width: 960px; }
@@ -236,6 +272,9 @@ h2 {
   .steps li:nth-child(2)::after { display: none; }
   .backtest { grid-template-columns: minmax(0, 1fr); }
   .backtest table { grid-row: auto; }
+  .specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .specs div:nth-child(3) { padding-left: 0; border-left: 0; }
+  .specs div:nth-child(n + 3) { border-top: 1px solid var(--line); }
 }
 @media (max-width: 640px) {
   .wide-only { display: none; }

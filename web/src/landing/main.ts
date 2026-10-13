@@ -3,6 +3,7 @@ import "@fontsource-variable/mona-sans/wdth.css";
 import "@fontsource/monaspace-neon/400.css";
 import "@fontsource/monaspace-neon/600.css";
 import "./landing.css";
+import { carDrawing } from "./car-drawing";
 import type { RaceForecast, SeasonForecasts } from "../types";
 
 const DATA = `${import.meta.env.BASE_URL}data`;
@@ -163,6 +164,11 @@ function renderMisses(data: SeasonForecasts) {
 }
 
 // ------------------------------------------------------------------ boot
+const narrow = matchMedia("(max-width: 640px)");
+const drawCar = () => ($("#carDrawing").innerHTML = carDrawing(narrow.matches));
+drawCar();
+narrow.addEventListener("change", drawCar);
+
 async function boot() {
   let data: SeasonForecasts;
   try {
