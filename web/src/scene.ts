@@ -6,8 +6,39 @@ import type { Car, Replay } from "./types";
 export type CameraPreset = "orbit" | "top" | "side";
 export type ColorMode = "team" | "prob";
 
-const BG = 0x0d0f12;
-const FORECAST = 0xb47cff;
+export type Theme = "dark" | "light";
+
+// Scene colours per theme, matching the page tokens in style.css.
+const PALETTES = {
+  dark: {
+    bg: 0x0d0f12,
+    forecast: 0xb47cff,
+    grid: [0x1c2027, 0x161a20],
+    tarmac: 0x3a404b,
+    racingLine: 0x8b93a1,
+    footprint: 0x2a2f38,
+    gantry: 0xe9ebee,
+    probLow: 0x2b2f38,
+    labelBg: "rgba(11,13,16,.85)",
+    labelFg: "#e9ebee",
+    glow: { blending: THREE.AdditiveBlending, opacity: 1 },
+  },
+  light: {
+    bg: 0xfafbfc,
+    forecast: 0x7a35e8,
+    grid: [0xd5d9df, 0xe8eaee],
+    tarmac: 0xb9bec6,
+    racingLine: 0x5d646f,
+    footprint: 0xd0d4da,
+    gantry: 0x14171c,
+    probLow: 0xd6d9df,
+    labelBg: "rgba(255,255,255,.92)",
+    labelFg: "#14171c",
+    // additive glow vanishes on white, so it becomes a soft tinted halo
+    glow: { blending: THREE.NormalBlending, opacity: 0.35 },
+  },
+} as const;
+type Palette = (typeof PALETTES)[Theme];
 
 interface CarMesh {
   car: Car;
@@ -32,16 +63,16 @@ function glowTexture(): THREE.Texture {
 
 export const LABEL_FONT = "700 26px 'Hubot Sans Variable', 'Arial Narrow', sans-serif";
 
-function labelTexture(text: string, color: string): THREE.Texture {
+function labelTexture(text: string, color: string, pal: Palette): THREE.Texture {
   const c = document.createElement("canvas");
   c.width = 128;
   c.height = 48;
   const x = c.getContext("2d")!;
-  x.fillStyle = "rgba(11,13,16,.85)";
+  x.fillStyle = pal.labelBg;
   x.fillRect(0, 6, 128, 36);
   x.fillStyle = color;
   x.fillRect(0, 6, 6, 36);
-  x.fillStyle = "#e9ebee";
+  x.fillStyle = pal.labelFg;
   x.font = LABEL_FONT;
   x.textBaseline = "middle";
   x.fillText(text, 16, 25);
@@ -56,7 +87,8 @@ export class TrackScene {
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(38, 1, 10, 30000);
   private controls: OrbitControls;
-  private ground = new THREE.GridHelper(6000, 60, 0x1c2027, 0x161a20);
+  private pal: Palette = PALETTES.dark;
+  private ground = new THREE.GridHelper(6000, 60, PALETTES.dark.grid[0], PALETTES.dark.grid[1]);
   private trackGroup = new THREE.Group();
   private cars: CarMesh[] = [];
   private glowTex = glowTexture();
@@ -69,8 +101,8 @@ export class TrackScene {
     this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(BG, 1);
-    this.scene.fog = new THREE.Fog(BG, 3200, 9000);
+    this.renderer.setClearColor(this.pal.bg, 1);
+    this.scene.fog = new THREE.Fog(this.pal.bg, 3200, 9000);
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
@@ -94,7 +126,7 @@ export class TrackScene {
     const k = Math.min(Math.max(this.radius / 1000, 0.6), 1.2);
     this.controls.minDistance = this.radius * 0.6;
     this.controls.maxDistance = this.radius * 8;
-    this.scene.fog = new THREE.Fog(BG, this.radius * 3.2, this.radius * 7.5);
+    this.scene.fog = new THREE.Fog(this.pal.bg, this.radius * 3.2, this.radius * 7.5);
     for (const m of this.cars) this.scene.remove(m.group);
     this.cars = replay.cars.map((car) => {
       const group = new THREE.Group();
@@ -107,14 +139,15 @@ export class TrackScene {
           map: this.glowTex,
           color: car.color,
           transparent: true,
-          blending: THREE.AdditiveBlending,
+          blending: this.pal.glow.blending,
+          opacity: this.pal.glow.opacity,
           depthWrite: false,
         }),
       );
       glow.scale.set(110 * k, 110 * k, 1);
       dot.scale.setScalar(k);
       const label = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: labelTexture(car.code, car.color), transparent: true, depthTest: false }),
+        new THREE.SpriteMaterial({ map: labelTexture(car.code, car.color, this.pal), transparent: true, depthTest: false }),
       );
       label.scale.set(150 * k, 56 * k, 1);
       label.position.y = 70 * k;
@@ -124,6 +157,30 @@ export class TrackScene {
       this.scene.add(group);
       return { car, group, dot, glow, label };
     });
+    this.buildTrack();
+  }
+
+  /** Recolour everything for a theme. Callers repaint the cars afterwards (see paint). */
+  setTheme(theme: Theme) {
+    this.pal = PALETTES[theme];
+    this.renderer.setClearColor(this.pal.bg, 1);
+    (this.scene.fog as THREE.Fog).color.setHex(this.pal.bg);
+    const ground = new THREE.GridHelper(6000, 60, this.pal.grid[0], this.pal.grid[1]);
+    ground.position.copy(this.ground.position);
+    this.scene.remove(this.ground);
+    this.ground.geometry.dispose();
+    this.ground = ground;
+    this.scene.add(ground);
+    for (const m of this.cars) {
+      const glow = m.glow.material as THREE.SpriteMaterial;
+      glow.blending = this.pal.glow.blending;
+      glow.opacity = this.pal.glow.opacity;
+      glow.needsUpdate = true;
+      const label = m.label.material as THREE.SpriteMaterial;
+      label.map?.dispose();
+      label.map = labelTexture(m.car.code, m.car.color, this.pal);
+      label.needsUpdate = true;
+    }
     this.buildTrack();
   }
 
@@ -163,11 +220,11 @@ export class TrackScene {
     const ribbon = new THREE.BufferGeometry();
     ribbon.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     ribbon.setIndex(idx);
-    g.add(new THREE.Mesh(ribbon, new THREE.MeshBasicMaterial({ color: 0x3a404b, side: THREE.DoubleSide })));
+    g.add(new THREE.Mesh(ribbon, new THREE.MeshBasicMaterial({ color: this.pal.tarmac, side: THREE.DoubleSide })));
 
     const line = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(curve.getSpacedPoints(N)),
-      new THREE.LineBasicMaterial({ color: 0x8b93a1, transparent: true, opacity: 0.55 }),
+      new THREE.LineBasicMaterial({ color: this.pal.racingLine, transparent: true, opacity: 0.55 }),
     );
     line.position.y = 1.2;
     g.add(line);
@@ -177,17 +234,17 @@ export class TrackScene {
     for (let i = 0; i < pts.length; i += 4) cur.push(pts[i].x, base, pts[i].z, pts[i].x, pts[i].y, pts[i].z);
     const cg = new THREE.BufferGeometry();
     cg.setAttribute("position", new THREE.Float32BufferAttribute(cur, 3));
-    g.add(new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: FORECAST, transparent: true, opacity: 0.13 })));
+    g.add(new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: this.pal.forecast, transparent: true, opacity: 0.13 })));
     g.add(
       new THREE.LineLoop(
         new THREE.BufferGeometry().setFromPoints(pts.map((v) => new THREE.Vector3(v.x, base, v.z))),
-        new THREE.LineBasicMaterial({ color: 0x2a2f38 }),
+        new THREE.LineBasicMaterial({ color: this.pal.footprint }),
       ),
     );
 
     // start/finish gantry
     const sf = pts[0];
-    const gantry = new THREE.Mesh(new THREE.BoxGeometry(4, 40, 44), new THREE.MeshBasicMaterial({ color: 0xe9ebee }));
+    const gantry = new THREE.Mesh(new THREE.BoxGeometry(4, 40, 44), new THREE.MeshBasicMaterial({ color: this.pal.gantry }));
     gantry.position.set(sf.x, sf.y + 20, sf.z);
     gantry.lookAt(pts[3].x, sf.y + 20, pts[3].z);
     g.add(gantry);
@@ -203,7 +260,7 @@ export class TrackScene {
       const col =
         mode === "team"
           ? new THREE.Color(m.car.color)
-          : new THREE.Color(0x2b2f38).lerp(new THREE.Color(FORECAST), Math.sqrt((pWin[m.car.code] ?? 0) / maxP));
+          : new THREE.Color(this.pal.probLow).lerp(new THREE.Color(this.pal.forecast), Math.sqrt((pWin[m.car.code] ?? 0) / maxP));
       m.dot.material.color = col;
       (m.glow.material as THREE.SpriteMaterial).color = col;
     }

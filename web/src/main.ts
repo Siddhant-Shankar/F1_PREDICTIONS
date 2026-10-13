@@ -3,7 +3,7 @@ import "@fontsource-variable/mona-sans/wdth.css";
 import "@fontsource/monaspace-neon/400.css";
 import "@fontsource/monaspace-neon/600.css";
 import "./style.css";
-import { LABEL_FONT, TrackScene, type CameraPreset } from "./scene";
+import { LABEL_FONT, TrackScene, type CameraPreset, type Theme } from "./scene";
 import type { RaceForecast, Replay, SeasonForecasts } from "./types";
 
 const DATA = `${import.meta.env.BASE_URL}data`;
@@ -311,12 +311,13 @@ const setColor = (mode: "team" | "prob") => {
   scene.paint(mode, pWin());
   renderLegend();
 };
-type Theme = "dark" | "light";
 const themeQuery = matchMedia("(prefers-color-scheme: light)");
 const setTheme = (theme: Theme, save: boolean) => {
   document.documentElement.dataset.theme = theme;
   $("#theme-dark").setAttribute("aria-pressed", String(theme === "dark"));
   $("#theme-light").setAttribute("aria-pressed", String(theme === "light"));
+  scene.setTheme(theme);
+  if (state.race) scene.paint(state.colorMode, pWin());
   if (save) {
     try {
       localStorage.setItem("pitwall-theme", theme);
